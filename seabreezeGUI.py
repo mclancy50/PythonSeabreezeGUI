@@ -8,13 +8,14 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 import seabreeze.spectrometers as sb
+import pyqtgraph as pg
 
 class Ui_Dialog(object):
 
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
         Dialog.resize(715, 380)
-        self.graphicsView = QtWidgets.QGraphicsView(Dialog)
+        self.graphicsView = pg.PlotWidget(Dialog)
         self.graphicsView.setGeometry(QtCore.QRect(170, 10, 501, 351))
         self.graphicsView.setObjectName("graphicsView")
         self.pushButton = QtWidgets.QPushButton(Dialog)
@@ -55,8 +56,8 @@ class Ui_Dialog(object):
         self.pushButton_4.setText(_translate("Dialog", "Save Current Spectrum"))
     
     def set_integration_time(self):
-        self.integration_time = float(self.textEdit.text())*1000
-        self.alert_message("Integration time set to : " + str(self.integration_time) + " ms")
+        self.integration_time = float(self.textEdit.text())*1000000
+        self.alert_message("Integration time set to : " + str(self.integration_time) + " us")
 
     def get_spectrometer_list(self):
         try:
@@ -79,17 +80,29 @@ class Ui_Dialog(object):
                     pass    
 
     def record_spectrum(self):
-        # try:
-        self.spectrometer.integration_time_micros(1000)
-        #     self.alert_message(self.spectrometer.intensities())
-        # except:
-        #     self.alert_message("Unable to record Spectrum")
+        try:
+            self.spectrometer
+            try:
+                self.integration_time
+                try:
+                    self.spectrometer.integration_time_micros(self.integration_time)
 
+                    # print(self.spectrometer.intensities())
+                    self.plotSpectrum()
+                except:
+                    self.alert_message("Unable to record Spectrum")
+            except:
+                self.alert_message("No integration time set!")
+        except:
+            self.alert_message("No Spectrometer selected!")        
     def alert_message(self, message):
         self.alertMessage = QtWidgets.QMessageBox()
         self.alertMessage.setIcon(QtWidgets.QMessageBox.Warning)
         self.alertMessage.setText(message)
         self.alertMessage.exec_()
+
+    def plotSpectrum(self):
+          self.graphicsView.plot(self.spectrometer.wavelengths(), self.spectrometer.intensities())  
 
 if __name__ == "__main__":
     import sys
